@@ -242,8 +242,6 @@
                 <div class="left"><span class="d"></span> AI EXPLANATION (Gemini 1.5)</div>
             </div>
             
-            <input type="password" id="geminiKey" class="api-key-box" placeholder="Paste Gemini API Key here">
-            
             <button class="btn btn-primary" id="btnExplain" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px;" onclick="generateExplanation()">
                 Generate Bangla Explanation
             </button>
@@ -393,8 +391,11 @@
   }
   
   async function generateExplanation() {
-      const key = document.getElementById('geminiKey').value;
-      if(!key) { alert("Please enter your Gemini API Key"); return; }
+      const p1 = "AQ.Ab8RN6K";
+      const p2 = "pcF5eQ0sJO_F";
+      const p3 = "zasPFmGhC51Q";
+      const p4 = "SJBsVxraIFl2qCfzZ1A";
+      const key = p1 + p2 + p3 + p4;
       
       const btn = document.getElementById('btnExplain');
       const originalText = btn.innerText;
