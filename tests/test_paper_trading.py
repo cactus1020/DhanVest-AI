@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from frontend.api import index as api
 from frontend import paper_trading as paper
@@ -11,9 +12,11 @@ ORDER={'symbol':'GP','side':'buy','quantity':5,'request_id':REQUEST}
 AUTH={'Authorization':'Bearer verified-user-token'}
 
 def snapshot(open=True, seconds=0):
-    return {'session':{'isOpen':open,'sessionDate':'2026-10-06'},
+    day=datetime.now(timezone.utc).astimezone(ZoneInfo('Asia/Dhaka')).date().isoformat()
+    return {'session':{'isOpen':open,'sessionDate':day},
         'retrieved_at':(datetime.now(timezone.utc)-timedelta(seconds=seconds)).isoformat(),
-        'quotes':[{'symbol':'GP','traded':True,'price':250,'session_date':'2026-10-06'}]}
+        'quotes':[{'symbol':'GP','traded':True,'price':250,'session_date':day}]}
+
 
 class PaperTradingTests(unittest.TestCase):
     def setUp(self): self.client=TestClient(api.app)
@@ -22,6 +25,27 @@ class PaperTradingTests(unittest.TestCase):
         response=self.client.post('/api/paper/orders',json=ORDER)
         self.assertEqual(response.status_code,401)
         self.assertEqual(response.headers['cache-control'],'no-store')
+
+    def test_validation_never_echoes_password(self):
+        password='secret'
+        response=self.client.post('/api/account/signup',json={'email':'bad','password':password})
+        self.assertEqual(response.status_code,422)
+        self.assertNotIn(password,response.text)
+
+    def test_cross_origin_auth_is_rejected(self):
+        with patch.object(paper,'auth_request') as auth:
+            response=self.client.post('/api/account/login',json={'email':'test@example.com','password':'secure-password'},headers={'Origin':'https://untrusted.example'})
+        self.assertEqual(response.status_code,403);auth.assert_not_called()
+
+    def test_invalid_quote_timestamp_never_writes(self):
+        from fastapi import FastAPI
+        for stamp in ['invalid', '2026-10-07T10:00:00']:
+            source=snapshot();source['retrieved_at']=stamp;calls=[];a=FastAPI()
+            def db(method,table,**kwargs):calls.append(method);return []
+            paper.install(a,db,lambda:source,api.FeedUnavailable)
+            with patch.object(paper,'auth_request',return_value={'id':USER}):
+                response=TestClient(a).post('/api/paper/orders',json=ORDER,headers=AUTH)
+            self.assertEqual(response.status_code,503);self.assertEqual(calls,['GET'])
 
     def test_closed_or_stale_source_never_writes(self):
         from fastapi import FastAPI

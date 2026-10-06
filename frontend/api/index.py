@@ -137,12 +137,16 @@ def feed_error(request, error):
     return JSONResponse(status_code=503, content={"detail":str(error), "code":"market_feed_unavailable"}, headers={"Cache-Control":"no-store"})
 
 
-@app.get('/api/jobs/market-sync')
-def sync_market(request: Request):
+def authorize_job(request: Request):
     expected = os.getenv('CRON_SECRET','')
     supplied = request.headers.get('authorization','')
     if not expected or not secrets.compare_digest(supplied,'Bearer '+expected):
         raise HTTPException(401,'Not authorized.')
+
+
+@app.get('/api/jobs/market-sync')
+def sync_market(request: Request):
+    authorize_job(request)
     snapshot = market_snapshot()
     if snapshot['session'].get('tradingDay') is False:
         return {'status':'skipped','reason':'Not a trading day.'}
@@ -387,6 +391,11 @@ try:
 except ImportError:
     from paper_trading import install as install_paper_trading
 install_paper_trading(app, database_request, market_snapshot, FeedUnavailable)
+try:
+    from ..news_pipeline import install as install_news_pipeline
+except ImportError:
+    from news_pipeline import install as install_news_pipeline
+install_news_pipeline(app, database_request, read_all, authorize_job)
 
 @app.get('/v2/practice', include_in_schema=False)
 def practice():

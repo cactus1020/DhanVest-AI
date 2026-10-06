@@ -2,13 +2,17 @@
   "framework": "fastapi",
   "functions": {
     "app.py": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "crons": [
     {
       "path": "/api/jobs/market-sync",
       "schedule": "30 10 * * *"
+    },
+    {
+      "path": "/api/jobs/news-sync",
+      "schedule": "0 11 * * *"
     }
   ]
 }

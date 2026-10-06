@@ -126,7 +126,7 @@ The research dashboard now includes company search, sector filtering, sorting by
 
 Example: `python -m backend.news_events licensed-news.jsonl --symbols GP,SQURPHARMA --output validated-news.jsonl --confirm-rights`. The output must not already exist. The tool validates the complete input before creating output and never changes the live database. `event_features(events, symbol, as_of)` includes only events observed by the prediction cutoff. Counts are not sentiment, causal impact, or probability estimates.
 
-Still required for live news and model training: a permitted feed and authentic dated market archive, the database migration, ingestion scheduling with monitoring, entity resolution, duplicate-story clustering, and out-of-time evaluation against the price-only baseline. No live feed, scheduled ingestion, or news-based prediction has been activated.
+Still required for live news and model training: a permitted feed and authentic dated market archive, the database migration, ingestion scheduling with monitoring, entity resolution, duplicate-story clustering, and out-of-time evaluation against the price-only baseline. Official DSE feeds and daily collectors are now active; public news-based predictions remain disabled. Newspaper ingestion is pending.
 
 
 ### Preserved research and V2 workspace
@@ -135,7 +135,7 @@ Still required for live news and model training: a permitted feed and authentic 
 
 The history endpoint accepts `?include_stored=true`: when no verified dates exist, it returns `mode: stored_sequence`, uses observation numbers and labels date/source uncertainty. It does not turn the generated import dates into real trading dates. Verified history remains the default endpoint behavior.
 
-`/v2` is a separate development workspace for the intended live platform, with database status, company price metrics, research, stored charts and disclosure/news source links. It currently uses preserved historical records. Live quote/news feeds and a validated prediction module have not been connected. Current implementation gaps and all 58 execution-plan tasks are reviewed in [the proposition alignment review](docs/proposition-alignment-review.md).
+`/v2` is a separate development workspace for the intended live platform, with database status, company price metrics, research, stored charts and disclosure/news source links. It combines preserved records with DSE quotes, historical charts and announcements. Validated production forecasts are not enabled. Current implementation gaps and all 58 execution-plan tasks are reviewed in [the proposition alignment review](docs/proposition-alignment-review.md).
 
 
 ### DSE integration and first price/news experiment completed
@@ -146,4 +146,14 @@ V2 reads the public DSE quote snapshot (360 PUBLIC-board equities in the tested 
 
 The first real price-plus-announcement ML comparison uses 2,467 official events. Two-session and forty-session research candidates are saved locally under ignored data/news-model-candidates-20261006, alongside provenance metadata. Mean balanced accuracy over three purged chronological tests is 50.5% price-only versus 49.9% news-augmented for two sessions, and 53.2% versus 54.7% for forty sessions. These are exploratory results, not calibrated probabilities or proven trading performance. Newspaper archives, macroeconomic features, corporate-action adjustment, complete historical publication/revision evidence, final holdout and live shadow testing remain pending. See docs/price-news-experiment-20261006.md. The candidate models are not exposed as production forecasts.
 
-Supabase credential rotation remains pending because this project also contains other applications' tables. A project-wide JWT rotation could affect those applications and requires a coordinated dependency plan. Original user documents and Git history remain preserved.
+Supabase credential migration/revocation remains pending. The exposed legacy key must be invalidated after a scoped dependency check; no unrelated projects or global auth settings were changed. Original user documents and Git history remain preserved.
+
+### Practice beta and readiness — 7 October 2026
+
+`/v2/practice` supports authenticated virtual portfolios with BDT 1m initial funding, simulated buy/sell fees, holdings, P/L and receipts. Stock search, affordability hints, explicit trade review, retry verification, CSV export and mobile layouts are included. See [paper trading](docs/paper-trading.md) for simplified settlement and session limits. Credentials in invalid requests are redacted and cross-origin auth/order forms are rejected.
+
+The private daily announcement collector records actual first-seen timestamps and distinct revisions without backdating news availability. First run captured 31 versions across 50 companies. Protected `/api/jobs/news-sync` is scheduled daily at 11:00 UTC (around 17:00 Dhaka, plan timing varies). `python -m scripts.export_prospective_news --output data/<unique-name>.jsonl` exports private point-in-time data for research. Newspaper coverage is not yet included.
+
+Migrations 004–007 add virtual portfolios, prospective-news records, private research prediction/outcome ledgers and restricted receipt permissions. `python -m scripts.resolve_shadow_predictions` resolves eligible private outcomes using future verified trading sessions. It does not create forecasts, promote models or submit trades.
+
+66 software tests, rollback-only PostgreSQL checks, a dedicated live QA account login/funding smoke test, and isolated browser buy/sell/isolation checks passed. This supports a supervised prototype pitch; it does not certify public production readiness. Email delivery/recovery, key revocation, durable abuse protection, sustained operation and live model validation are still required. See the [readiness assessment](docs/production-readiness-20261007.md).

@@ -1,4 +1,15 @@
 {
   "framework": "fastapi",
-  "functions": { "app.py": { "maxDuration": 30, "excludeFiles": "{venv/**,tests/**,scripts/**,**/*.db,**/*.pkl,**/*.pdf,**/*.docx,**/*.pptx,**/*.csv}" } }
+  "functions": {
+    "app.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{venv/**,tests/**,scripts/**,**/*.db,**/*.pkl,**/*.pdf,**/*.docx,**/*.pptx,**/*.csv}"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/jobs/news-sync",
+      "schedule": "0 11 * * *"
+    }
+  ]
 }

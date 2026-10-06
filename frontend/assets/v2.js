@@ -85,3 +85,10 @@ async function showIngestionStatus() {
  catch (error) { target.textContent = error.message; }
 }
 showIngestionStatus();
+
+async function showNewsCaptureStatus() {
+ const target = document.getElementById("newsCaptureStatus");
+ try { const response = await request("news/status"); const run = response.last_run; target.textContent = run ? "Announcement collection: " + run.status + " · " + run.company_count + " companies · " + run.observed_versions + " versions observed. First-seen times are recorded for research." : "Announcement collection is scheduled daily; first run pending."; }
+ catch (_) { target.textContent = "Announcement collection status unavailable. Stock research remains available."; }
+}
+showNewsCaptureStatus();

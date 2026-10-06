@@ -1,13 +1,17 @@
 """Authenticated virtual-money trading. Never sends an order to an exchange."""
 import os
+import re
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 from zoneinfo import ZoneInfo
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import HTTPException, Request
-from pydantic import BaseModel, Field
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
 
 
 def auth_request(path, body=None, token=None):
@@ -19,6 +23,8 @@ def auth_request(path, body=None, token=None):
         with httpx.Client(timeout=12) as client:
             response = client.request('GET' if token else 'POST', base+'/auth/v1/'+path,
                 headers={'apikey':key, 'Authorization':'Bearer '+(token or key)}, json=body)
+        if response.status_code == 429:
+            raise HTTPException(429, 'Too many attempts. Please wait before trying again.')
         if response.status_code >= 400:
             raise HTTPException(401 if token else 400, 'Sign-in failed. Check your details or confirm your email.')
         return response.json()
@@ -41,6 +47,14 @@ class Credentials(BaseModel):
     email: str = Field(min_length=5, max_length=254)
     password: str = Field(min_length=8, max_length=128)
 
+    @field_validator('email')
+    @classmethod
+    def email_address(cls, value):
+        value = value.strip().lower()
+        if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', value):
+            raise ValueError('Enter a valid email address.')
+        return value
+
 
 class Order(BaseModel):
     symbol: str = Field(pattern=r'^[A-Z0-9_.-]{1,25}$')
@@ -50,11 +64,26 @@ class Order(BaseModel):
 
 
 def install(app, database_request, market_snapshot, feed_error):
+    @app.exception_handler(RequestValidationError)
+    async def invalid_input(request, error):
+        # FastAPI's default validation response can echo submitted passwords.
+        return JSONResponse(status_code=422, content={'detail':'Check the email, password and order fields.'},
+                            headers={'Cache-Control':'no-store'})
+
     @app.middleware('http')
     async def private_headers(request, call_next):
+        if request.method == 'POST' and request.url.path.startswith(('/api/paper', '/api/account')):
+            origin = request.headers.get('origin')
+            if origin and urlparse(origin).netloc != request.url.netloc:
+                return JSONResponse(status_code=403,content={'detail':'Use the DhanVest website to submit this form.'},
+                                    headers={'Cache-Control':'no-store'})
         response = await call_next(request)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['Referrer-Policy'] = 'no-referrer'
         if request.url.path.startswith(('/api/paper', '/api/account')):
             response.headers['Cache-Control'] = 'no-store'
+        if request.url.path == '/v2/practice':
+            response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
         return response
 
     @app.post('/api/account/{action}')
@@ -112,7 +141,12 @@ def install(app, database_request, market_snapshot, feed_error):
         except feed_error:
             raise HTTPException(503, 'Fresh DSE prices are unavailable; no trade was executed.') from None
         now = datetime.now(timezone.utc)
-        retrieved = datetime.fromisoformat(snapshot['retrieved_at'])
+        try:
+            retrieved = datetime.fromisoformat(snapshot['retrieved_at'].replace('Z','+00:00'))
+            if retrieved.tzinfo is None:
+                raise ValueError()
+        except (KeyError, ValueError, TypeError, AttributeError):
+            raise HTTPException(503, 'Quote timestamp is invalid; no trade was executed.') from None
         age = (now-retrieved).total_seconds()
         if (not snapshot['session'].get('isOpen') or age < 0 or age > 120
             or snapshot['session'].get('sessionDate') != now.astimezone(ZoneInfo('Asia/Dhaka')).date().isoformat()):
