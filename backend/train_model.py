@@ -1,65 +1,85 @@
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+"""Research-only model evaluation using purged chronological folds."""
+import argparse
+import json
 import pickle
-import os
+from pathlib import Path
 
-# 1. Load Real Data
-file_path = os.path.join(os.path.dirname(__file__), "..", "real_dse_data.csv")
-df = pd.read_csv(file_path)
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
-# Ensure numeric types
-numeric_cols = ['ltp', 'high', 'low', 'open', 'close', 'ycp', 'trade', 'value', 'volume']
-for col in numeric_cols:
-    df[col] = pd.to_numeric(df[col], errors='coerce')
+from backend.data_validation import load_market_data, validate_source
 
-# Feature Engineering
-print("Feature Engineering...")
-features = []
+FEATURES = ["close", "volume", "return_daily", "momentum_ratio", "vol_ma5"]
 
-for symbol, group in df.groupby('symbol'):
-    group = group.copy()
-    
-    # Calculate simple features
-    group['return_daily'] = group['close'].pct_change()
-    group['ma5'] = group['close'].rolling(5).mean()
-    group['ma20'] = group['close'].rolling(20).mean()
-    group['vol_ma5'] = group['volume'].rolling(5).mean()
-    
-    # Momentum indicator
-    group['momentum_ratio'] = group['ma5'] / group['ma20']
-    
-    # Target: 5-day future return > 0 (1 if up, 0 if down)
-    group['future_close_5d'] = group['close'].shift(-5)
-    group['future_return_5d'] = (group['future_close_5d'] - group['close']) / group['close']
-    group['target'] = (group['future_return_5d'] > 0).astype(int)
-    
-    features.append(group)
 
-df_feat = pd.concat(features).dropna()
+def features(frame):
+    groups = []
+    for _, stock in frame.groupby("symbol"):
+        stock = stock.sort_values("date").copy()
+        stock["return_daily"] = stock["close"].pct_change(fill_method=None)
+        stock["momentum_ratio"] = stock["close"].rolling(5).mean() / stock["close"].rolling(20).mean()
+        stock["vol_ma5"] = stock["volume"].rolling(5).mean()
+        future = stock["close"].shift(-5)
+        stock["label_date"] = stock["date"].shift(-5)
+        stock["target"] = (future > stock["close"]).astype(int)
+        groups.append(stock)
+    return pd.concat(groups).replace([np.inf, -np.inf], np.nan).dropna(subset=FEATURES + ["label_date"])
 
-X = df_feat[['close', 'volume', 'return_daily', 'momentum_ratio', 'vol_ma5']]
-y = df_feat['target']
 
-print(f"Data shape after feature engineering: {X.shape}")
+def chronological_folds(frame):
+    days = np.array(sorted(frame["date"].unique()))
+    if len(days) < 100:
+        raise ValueError("At least 100 dated feature sessions are required for walk-forward evaluation.")
+    for block in np.array_split(days[len(days) // 2:], 3):
+        start, end = pd.Timestamp(block[0]), pd.Timestamp(block[-1])
+        # Labels crossing into the test window are purged from training.
+        train = frame[(frame["date"] < start) & (frame["label_date"] < start)]
+        test = frame[(frame["date"] >= start) & (frame["date"] <= end)]
+        if train.empty or test.empty or train["target"].nunique() < 2:
+            raise ValueError("Insufficient samples or target classes in a chronological fold.")
+        yield train, test
 
-# 2. Train Model
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-print("Training Random Forest Classifier...")
-model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
-model.fit(X_train, y_train)
+def train_model(path, source_url, confirm_verified=False, output=None):
+    frame = load_market_data(path)
+    validate_source(source_url)
+    if not confirm_verified:
+        raise ValueError("Training requires verified source data; pass --confirm-verified after checking it.")
+    frame = features(frame)
+    report = {"status": "research_only", "source": source_url, "rows": len(frame), "features": FEATURES, "horizon_sessions": 5, "folds": [], "limitations": ["Not a trading recommendation.", "No transaction-cost, survivorship-bias, or portfolio-performance evaluation.", "The model is not used by production scoring."]}
+    for train, test in chronological_folds(frame):
+        model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, n_jobs=1)
+        model.fit(train[FEATURES], train["target"])
+        prediction = model.predict(test[FEATURES])
+        baseline = int(train["target"].mode().iloc[0])
+        report["folds"].append({
+            "train_end": train["date"].max().date().isoformat(),
+            "latest_training_label": train["label_date"].max().date().isoformat(),
+            "test_start": test["date"].min().date().isoformat(), "test_end": test["date"].max().date().isoformat(),
+            "train_rows": len(train), "test_rows": len(test),
+            "accuracy": accuracy_score(test["target"], prediction),
+            "balanced_accuracy": balanced_accuracy_score(test["target"], prediction),
+            "majority_baseline_accuracy": accuracy_score(test["target"], np.full(len(test), baseline)),
+        })
+    output = Path(output or Path(__file__).with_name("model-evaluation.json"))
+    output.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, n_jobs=1)
+    model.fit(frame[FEATURES], frame["target"])
+    with output.with_suffix(".pkl").open("wb") as handle:
+        pickle.dump(model, handle)
+    print(f"Saved three purged chronological evaluations to {output}. No investment performance claim is established.")
+    return report
 
-# 3. Evaluate
-preds = model.predict(X_test)
-acc = accuracy_score(y_test, preds)
-print(f"Model Accuracy on Test Data: {acc * 100:.2f}%")
 
-# 4. Save Model
-model_path = os.path.join(os.path.dirname(__file__), "dhanvest_model.pkl")
-with open(model_path, 'wb') as f:
-    pickle.dump(model, f)
-    
-print(f"Model successfully saved to {model_path}")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("csv")
+    parser.add_argument("--source-url", required=True)
+    parser.add_argument("--confirm-verified", action="store_true")
+    args = parser.parse_args()
+    try:
+        train_model(args.csv, args.source_url, args.confirm_verified)
+    except ValueError as error:
+        parser.exit(2, str(error) + "\n")

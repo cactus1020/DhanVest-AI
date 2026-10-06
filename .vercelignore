@@ -1,0 +1,17 @@
+.env
+.env.*
+venv/
+.git/
+*.db
+*.db-*
+*.docx
+*.pdf
+*.pptx
+*.csv
+dhanvest-mvp-*.html
+backend/dhanvest_model.pkl
+tests/
+scripts/
+
+backups/
+data/

@@ -1,0 +1,14 @@
+.v2-status{padding-top:18px;padding-bottom:18px;color:#425066;font-size:13px}
+.v2-status p:first-child{font-weight:700;color:#1E2761;margin-bottom:4px}
+.hero{background:#F2F5FC;color:#141824}.hero:after{display:none}
+.hero .tagpill{background:#E1E8FA;color:#1E2761;border-color:#CADCFC}
+.hero h1 em{color:#27337A}.hero p{color:#5B6472!important}
+.hero-grid{grid-template-columns:minmax(260px,.8fr) minmax(400px,1.4fr)}
+.research-controls label{color:#425066}.stock-list-container{background:#fff;border-color:#CADCFC}
+.stock-item{background:#F6F8FD;color:#141824;border:1px solid #E4E9F4}.stock-item .si-sym{color:#1E2761}.stock-item .si-name{color:#5B6472}.stock-item .si-score{color:#1E2761}.stock-item.active{background:#CADCFC;color:#141824}
+.mock{box-shadow:0 8px 30px #1e276112}.company-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.company-metrics div{background:#F6F8FD;padding:12px;border-radius:10px}.company-metrics span{display:block;font-size:12px;color:#5B6472}.company-metrics strong{font-size:20px;color:#1E2761}.company-metrics .up{color:#16754f}.company-metrics .down{color:#ad3c44}
+.health-note{background:#FFF5DD;border-radius:10px;padding:12px;font-size:13px;margin:16px 0}
+.v2-sources{padding-top:30px;padding-bottom:24px}.v2-sources h2{font-size:26px}.v2-sources p{font-size:14px;color:#5B6472;margin:12px 0}.source-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.source-grid a{padding:16px;background:#F6F8FD;border:1px solid #E4E9F4;border-radius:10px;color:#1E2761;font-size:14px}
+@media(max-width:850px){.hero-grid{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.company-metrics{gap:6px}.company-metrics strong{font-size:17px}.company-metrics div{padding:10px}}
+.announcement-panel{margin:18px 0;padding:14px;background:#F6F8FD;border-radius:10px}.announcement-panel h3{font-size:18px;margin-bottom:10px}.announcement-panel article{padding:10px 0;border-bottom:1px solid #E4E9F4}.announcement-panel small{display:block;color:#5B6472;font-size:12px}.announcement-panel a{display:block;color:#1E2761;font-size:14px;text-decoration:underline}.announcement-panel p{font-size:12px;margin-top:10px}
+#modelResearchResults table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}#modelResearchResults th,#modelResearchResults td{padding:12px;text-align:left;border-bottom:1px solid #E4E9F4}#savedResearch{margin:16px 0;padding:12px;background:#F6F8FD;border-radius:8px;font-size:13px}#savedResearch summary{cursor:pointer;min-height:32px;font-weight:600}

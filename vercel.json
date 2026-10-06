@@ -1,0 +1,4 @@
+{
+  "framework": "fastapi",
+  "functions": { "app.py": { "maxDuration": 30, "excludeFiles": "{venv/**,tests/**,scripts/**,**/*.db,**/*.pkl,**/*.pdf,**/*.docx,**/*.pptx,**/*.csv}" } }
+}

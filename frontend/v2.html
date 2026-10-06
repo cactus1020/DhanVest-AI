@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DhanVest AI — Bangladesh's AI-native investment intelligence</title>
+<title>DhanVest V2 — Bangladesh's AI-native investment intelligence</title>
 <meta name="description" content="Transparent, dated stock research in Bangla for the Dhaka Stock Exchange. Early-stage prototype.">
 <style>
   :root{
@@ -36,14 +36,14 @@
   .hero{position:relative;background:var(--navy);color:#fff;overflow:hidden;padding:50px 0 90px}
   .hero:after{content:"";position:absolute;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(95,211,166,.18),transparent 62%);top:-180px;right:-160px;pointer-events:none}
   .hero-grid{position:relative;display:grid;grid-template-columns:1fr 1.2fr;gap:40px;align-items:start}
-  
+
   .hero .tagpill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);padding:7px 14px;border-radius:30px;font-size:12.5px;font-weight:600;color:var(--ice);margin-bottom:22px}
   .hero .tagpill .g{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow: 0 0 10px var(--mint); animation: pulse 2s infinite;}
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(95,211,166,0.7); } 70% { box-shadow: 0 0 0 10px rgba(95,211,166,0); } 100% { box-shadow: 0 0 0 0 rgba(95,211,166,0); } }
-  
+
   .hero h1{font-size:42px;font-weight:600}
   .hero h1 em{font-style:italic;color:var(--ice)}
-  
+
   /* LIVE STOCK LIST */
   .stock-list-container {
     background: rgba(255,255,255,0.05);
@@ -58,7 +58,7 @@
   }
   .stock-list-container::-webkit-scrollbar { width: 6px; }
   .stock-list-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 6px; }
-  
+
   .stock-item {
     display: flex;
     justify-content: space-between;
@@ -72,7 +72,7 @@
   }
   .stock-item:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
   .stock-item.active { background: rgba(255,255,255,0.15); border-color: var(--mint); transform: translateX(5px); }
-  
+
   .si-sym { font-weight: 700; font-size: 15px; }
   .si-name { font-size: 12px; color: #C4CDE6; }
   .si-score { background: var(--mint); color: var(--navy); padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; transition: all 0.3s; }
@@ -81,16 +81,16 @@
   /* mock signal card -> LIVE CARD */
   .mock{background:#fff;border-radius:18px;box-shadow:0 30px 70px -25px rgba(0,0,0,.5);overflow:hidden;color:var(--ink);position:relative;z-index:10; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; transform: translateY(20px);}
   .mock.loaded { opacity: 1; transform: translateY(0); }
-  
+
   .mock-top{background:var(--soft);padding:18px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
   .mock-top .t{font-family:'Inter',sans-serif;font-weight:700;font-size:18px}
   .mock-top .t small{display:block;color:var(--muted);font-weight:500;font-size:13px;margin-top:2px}
   .mock-score-wrap { text-align: right; }
   .mock-score{background:#1E7F5C;color:#fff;font-family:'Inter',sans-serif;font-weight:700;font-size:22px;padding:6px 14px;border-radius:9px;display:inline-block; transition: background 0.3s;}
   .mock-score-label { font-size: 10px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 1px; margin-top: 4px; display: block; }
-  
+
   .mock-body{padding:24px}
-  
+
   /* ML PREDICTION BADGE */
   .ml-badge {
       background: linear-gradient(135deg, #27337A, #1E2761);
@@ -119,13 +119,13 @@
   .mock-f .l span{color:var(--muted); font-size: 12px;}
   .mbar{height:8px;background:#EEF2FA;border-radius:6px;overflow:hidden}
   .mbar span{display:block;height:100%;border-radius:6px; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);}
-  
+
   .mock-ai{margin-top:24px;background:var(--ice-l);border:1px solid #D8E2F8;border-radius:12px;padding:18px;font-family:'Inter',sans-serif}
   .mock-ai .h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px; justify-content: space-between;}
   .mock-ai .h .left {display:flex;align-items:center;gap:7px;}
   .mock-ai .h .d{width:8px;height:8px;border-radius:50%;background:#1E7F5C;box-shadow: 0 0 5px #1E7F5C;}
   .mock-ai p{font-size:14px;color:#2A3350;line-height:1.6}
-  
+
   .api-key-box {
       width: 100%;
       padding: 12px;
@@ -137,7 +137,7 @@
       transition: border-color 0.2s;
   }
   .api-key-box:focus { border-color: var(--navy); }
-  
+
   /* TRUST STRIP */
   .strip{background:var(--soft);border-bottom:1px solid var(--line);padding:22px 0}
   .strip-in{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:500; text-align: center;}
@@ -150,10 +150,10 @@
     .nav-links { display: none; }
     .hero { padding: 40px 0 60px; }
     .stock-list-container { max-height: 250px; }
-    
+
     .mock-top { padding: 14px 18px; }
     .mock-body { padding: 18px; }
-    
+
     /* Optional: make it slide automatically on mobile when clicked */
     .mock { scroll-margin-top: 80px; }
   }
@@ -188,8 +188,9 @@
   @media(max-width:850px){.wrap{padding:0 16px}.hero-grid{gap:24px}.hero h1{font-size:27px}.stock-list-container{max-height:340px}.mock{scroll-margin-top:80px}.nav-links{gap:12px}.nav-in .brand{font-size:18px;gap:7px}.nav-in .btn{font-size:12px;padding:10px 12px;white-space:nowrap}}
   @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
+<link rel="stylesheet" href="/assets/v2.css">
 </head>
-<body>
+<body data-version="v2">
 
 <nav>
   <div class="wrap nav-in">
@@ -198,20 +199,21 @@
       <a href="/research">Research dashboard</a>
       <a href="#methodology">Methodology</a>
     </div>
-    <a href="/early-access#waitlist" class="btn btn-dark nav-cta">Join early access</a>
+    <a href="/research" class="btn btn-dark nav-cta">Original dashboard</a>
   </div>
 </nav>
 
 <!-- HERO: LIVE APP -->
+<section class="v2-status wrap"><p id="connectionStatus" role="status">Checking database connection…</p><p id="ingestionStatus" role="status">Checking daily collector…</p><p id="marketFeedStatus" role="status">Connecting to DSE market data…</p><p>Price + news model: research comparison completed · Production validation and company fundamentals pending</p></section>
 <header class="hero">
   <div class="wrap hero-grid">
     <div>
-      <div class="tagpill"><span class="g"></span> DSE RESEARCH PROTOTYPE</div>
-      <h1>আপনার শেয়ার, <em>এক নজরে।</em></h1>
+      <div class="tagpill">DHANVEST V2 · DEVELOPMENT VERSION</div>
+      <h1>Company research <em>workspace.</em></h1>
       <p style="color:#C4CDE6; margin-top: 10px; font-size: 15px;">
-        Explore dated market snapshots and transparent factor scores. Missing information is shown explicitly; scores describe the available data and do not predict future prices.
+        DSE market snapshots, company announcements and your saved research in one place. Select a company to inspect its latest available session and historical movement.
       </p>
-      
+
       <div class="research-controls">
         <label class="wide">শেয়ার খুঁজুন / Search<input id="stockSearch" type="search" placeholder="Symbol or company name" autocomplete="off"></label>
         <label>Sector<select id="sectorFilter"><option value="">All sectors</option></select></label>
@@ -226,7 +228,7 @@
         <div id="stockList"></div>
       </div>
     </div>
-    
+
     <div>
       <!-- LIVE SIGNAL CARD -->
       <div class="mock" id="detailCard">
@@ -241,7 +243,8 @@
           <div class="research-actions"><button id="saveStock" disabled type="button" aria-pressed="false">☆ Save to watchlist</button><button id="backToStocks" type="button">↑ Stock list</button></div>
           <p style="font-size:12px;color:#5B6472">Watchlist is saved on this browser.</p>
           <div class="chart-panel"><b id="chartTitle">Closing prices · ৳</b><div class="research-actions" id="chartRanges"><button type="button" data-range="20" aria-pressed="true">1M</button><button type="button" data-range="60" aria-pressed="false">3M</button><button type="button" data-range="250" aria-pressed="false">1Y</button><button type="button" data-range="all" aria-pressed="false">All</button></div><svg id="priceChart" viewBox="0 0 500 160" role="img" aria-label="Verified historical closing prices" hidden></svg><p id="chartStatus" role="status" aria-live="polite">Select a stock to view verified history.</p></div>
-            
+
+          <div id="companyMetrics" class="company-metrics"></div>
           <div id="storedSummary" style="margin:12px 0;padding:12px;background:#EAF0FE;border-radius:8px;color:#141824" aria-live="polite"></div>
           <div id="dataDate" style="font-size:12px;color:#5B6472;margin-bottom:8px" aria-live="polite"></div>
           <p id="dataWarnings" style="font-size:12px;color:#8A5200;margin-bottom:8px"></p>
@@ -250,7 +253,7 @@
               <span>Data coverage:</span>
               <span id="c-trend" class="trend-up">--</span>
           </div>
-            
+
           <div class="mock-f">
               <div class="l"><b>Value</b><span id="c-val-text">--/100</span></div>
               <div class="mbar"><span id="c-val-bar" style="width:0%;background:#1E7F5C"></span></div>
@@ -267,17 +270,19 @@
               <div class="l"><b>Liquidity</b><span id="c-liq-text">--/100</span></div>
               <div class="mbar"><span id="c-liq-bar" style="width:0%;background:#3A4B9A"></span></div>
           </div>
-          
+
+          <div id="companyAnnouncements" class="announcement-panel" aria-live="polite"></div>
+          <div id="companyHealth" class="health-note"></div>
           <details id="savedResearch" hidden><summary>Previous saved research</summary><div id="savedResearchContent"></div></details>
           <div class="mock-ai">
             <div class="h">
                 <div class="left"><span class="d"></span> BANGLA EXPLANATION</div>
             </div>
-            
+
             <button class="btn btn-primary" id="btnExplain" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px;">
                 Explain in Bangla
             </button>
-            
+
             <p id="explanationText" aria-live="polite" style="display:none; margin-top: 10px;"></p>
           </div>
         </div>
@@ -285,6 +290,8 @@
     </div>
   </div>
 </header>
+<section class="wrap v2-sources"><h2>Price + news model research</h2><p>Actual price and announcement features are trained together. These results are exploratory validation, not a live forecast or calibrated confidence level.</p><div id="modelResearchResults" role="status"></div><p>Newspaper archives, broad market features, corporate-action adjustments and a live shadow record remain required.</p></section>
+<section class="wrap v2-sources"><h2>News &amp; disclosure sources</h2><p>DSE company announcements are fetched when you select a stock. Newspaper and broader news ingestion are being prepared.</p><div class="source-grid"><a href="https://www.dsebd.org/" target="_blank" rel="noopener noreferrer">DSE company disclosures ↗</a><a href="https://www.cse.com.bd/" target="_blank" rel="noopener noreferrer">CSE company announcements ↗</a><a href="https://thefinancialexpress.com.bd/category/stock" target="_blank" rel="noopener noreferrer">Financial Express stock news ↗</a><a href="https://www.tbsnews.net/economy/stocks" target="_blank" rel="noopener noreferrer">The Business Standard stock news ↗</a></div></section>
 <section id="methodology" class="wrap" style="padding:32px 24px;max-width:900px">
   <h2 style="font-size:26px">How the scores work</h2>
   <p>Quality uses reported ROE and debt-to-equity. Value compares positive P/E ratios with the median of at least three companies in the same sector. Fundamentals require a reporting date within the last 180 days. Momentum describes the return over 60 trading sessions; liquidity uses average volume over 20 sessions.</p>
@@ -306,5 +313,6 @@
 </div>
 
 <script src="/assets/research.js" defer></script>
+<script src="/assets/v2.js" defer></script>
 </body>
 </html>

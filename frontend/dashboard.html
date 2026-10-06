@@ -203,8 +203,9 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <h1>DhanVest AI</h1>
-            <p>Live Signal Board</p>
+            <p>DSE Research Board</p>
         </div>
+        <p id="loadStatus" role="status" aria-live="polite" style="padding:12px;font-size:13px"></p>
         <ul class="stock-list" id="stockList">
             <!-- Populated by JS -->
         </ul>
@@ -213,7 +214,7 @@
     <!-- Right Panel: Details -->
     <div class="main-content">
         <div class="header-controls">
-            <input type="password" id="apiKey" class="api-input" placeholder="Paste Gemini API Key here for demo">
+            <a href="/research" class="api-input">Research dashboard</a>
         </div>
 
         <div id="detailPanel" style="display: none;">
@@ -222,34 +223,37 @@
                 <p id="detailSector">Sector</p>
             </div>
 
+            <p id="snapshotDate" style="font-size:13px"></p>
+            <p id="snapshotWarnings" style="font-size:13px;color:#A66C00"></p>
+            <a id="snapshotSource" hidden target="_blank" rel="noopener noreferrer">View data source</a>
             <div class="factor-grid">
                 <div class="factor-card">
-                    <div class="factor-title">Value (28% Weight)</div>
+                    <div class="factor-title" id="labelValue">Value</div>
                     <div class="progress-bar-bg"><div class="progress-bar-fill" id="barValue"></div></div>
                     <div class="factor-value" id="valValue">0/100</div>
                 </div>
                 <div class="factor-card">
-                    <div class="factor-title">Quality (32% Weight)</div>
+                    <div class="factor-title" id="labelQuality">Quality</div>
                     <div class="progress-bar-bg"><div class="progress-bar-fill" id="barQuality"></div></div>
                     <div class="factor-value" id="valQuality">0/100</div>
                 </div>
                 <div class="factor-card">
-                    <div class="factor-title">Momentum (25% Weight)</div>
+                    <div class="factor-title" id="labelMomentum">Momentum</div>
                     <div class="progress-bar-bg"><div class="progress-bar-fill" id="barMomentum"></div></div>
                     <div class="factor-value" id="valMomentum">0/100</div>
                 </div>
                 <div class="factor-card">
-                    <div class="factor-title">Liquidity (15% Weight)</div>
+                    <div class="factor-title" id="labelLiquidity">Liquidity</div>
                     <div class="progress-bar-bg"><div class="progress-bar-fill" id="barLiquidity"></div></div>
                     <div class="factor-value" id="valLiquidity">0/100</div>
                 </div>
             </div>
 
             <div class="ai-section">
-                <h3>Verified AI Explanation</h3>
+                <h3>Bangla Explanation</h3>
                 <button class="generate-btn" id="generateBtn">Generate Explanation</button>
-                <div class="loader" id="loader">Calling AI Engine...</div>
-                <div class="explanation-box" id="explanationBox">
+                <div class="loader" id="loader">Preparing explanation...</div>
+                <div class="explanation-box" id="explanationBox" aria-live="polite">
                     Click generate to see the Bangla explanation based on the math above.
                 </div>
             </div>
@@ -259,117 +263,7 @@
         </div>
     </div>
 
-    <script>
-        const API_URL = "http://127.0.0.1:8000";
-        let currentStockId = null;
-
-        function getColorForScore(score) {
-            if(score >= 70) return 'var(--green)';
-            if(score >= 40) return 'var(--amber)';
-            return 'var(--red)';
-        }
-
-        async function fetchStocks() {
-            try {
-                const response = await fetch(`${API_URL}/stocks`);
-                const stocks = await response.json();
-                
-                const list = document.getElementById('stockList');
-                list.innerHTML = '';
-                
-                stocks.forEach(stock => {
-                    const li = document.createElement('li');
-                    li.className = 'stock-item';
-                    li.onclick = () => selectStock(stock, li);
-                    
-                    const scoreColor = getColorForScore(stock.composite);
-                    
-                    li.innerHTML = `
-                        <div>
-                            <div class="stock-symbol">${stock.symbol}</div>
-                            <div class="stock-name">${stock.name}</div>
-                        </div>
-                        <div class="stock-score-badge" style="background-color: ${scoreColor}">
-                            ${stock.composite.toFixed(0)}
-                        </div>
-                    `;
-                    list.appendChild(li);
-                });
-            } catch (error) {
-                console.error("Error fetching stocks:", error);
-                alert("Make sure the FastAPI backend is running!");
-            }
-        }
-
-        function selectStock(stock, element) {
-            document.querySelectorAll('.stock-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-            
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('detailPanel').style.display = 'block';
-            
-            currentStockId = stock.id;
-            document.getElementById('detailTitle').innerText = `${stock.name} (${stock.symbol})`;
-            document.getElementById('detailSector').innerText = stock.sector;
-            
-            // Set bars
-            document.getElementById('barValue').style.width = `${stock.value}%`;
-            document.getElementById('valValue').innerText = `${stock.value.toFixed(1)}/100`;
-            
-            document.getElementById('barQuality').style.width = `${stock.quality}%`;
-            document.getElementById('valQuality').innerText = `${stock.quality.toFixed(1)}/100`;
-            
-            document.getElementById('barMomentum').style.width = `${stock.momentum}%`;
-            document.getElementById('valMomentum').innerText = `${stock.momentum.toFixed(1)}/100`;
-            
-            document.getElementById('barLiquidity').style.width = `${stock.liquidity}%`;
-            document.getElementById('valLiquidity').innerText = `${stock.liquidity.toFixed(1)}/100`;
-            
-            // Reset explanation
-            if(stock.explanation_bn) {
-                document.getElementById('explanationBox').innerText = stock.explanation_bn;
-            } else {
-                document.getElementById('explanationBox').innerText = "Click generate to see the Bangla explanation based on the math above.";
-            }
-        }
-
-        document.getElementById('generateBtn').addEventListener('click', async () => {
-            const apiKey = document.getElementById('apiKey').value;
-            if(!apiKey) {
-                alert("Please paste your Gemini API key in the top right box for the demo.");
-                return;
-            }
-            if(!currentStockId) return;
-
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('explanationBox').style.display = 'none';
-
-            try {
-                const response = await fetch(`${API_URL}/explain`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        stock_id: currentStockId,
-                        api_key: apiKey
-                    })
-                });
-                
-                const data = await response.json();
-                if(response.ok) {
-                    document.getElementById('explanationBox').innerText = data.explanation;
-                } else {
-                    document.getElementById('explanationBox').innerText = "Error: " + data.detail;
-                }
-            } catch(e) {
-                document.getElementById('explanationBox').innerText = "Network Error.";
-            }
-
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('explanationBox').style.display = 'block';
-        });
-
-        // Init
-        fetchStocks();
-    </script>
+    <p style="position:fixed;bottom:0;left:0;right:0;padding:8px;background:#fff;color:#5B6472;font-size:12px">Information and education only. Not investment advice or a solicitation. Past performance does not indicate future results.</p>
+    <script src="/assets/dashboard.js" defer></script>
 </body>
 </html>

@@ -42,11 +42,6 @@ alter table public.stocks enable row level security;
 alter table public.daily_data enable row level security;
 alter table public.factor_scores enable row level security;
 
--- Create policies to allow public read access to factor_scores and stocks
-create policy "Allow public read access to stocks" on public.stocks
-  for select using (true);
-  
-create policy "Allow public read access to factor_scores" on public.factor_scores
-  for select using (true);
-
--- Backend (service_role) bypasses RLS, so it can write data without policies.
+-- Browser requests now go through the server API. Do not create public access
+-- policies. Apply migrations/001_trusted_data_and_waitlist.sql next.
+-- The backend service_role stays private and bypasses RLS.

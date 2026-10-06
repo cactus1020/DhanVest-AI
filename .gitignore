@@ -1,3 +1,27 @@
 venv/
 __pycache__/
 *.pyc
+.env
+.env.*
+!.env.example
+.vercel/
+*.db
+*.db-*
+backend/dhanvest_model.pkl
+backend/model-evaluation.json
+
+backups/
+data/
+
+# Local business documents and research source copies
+*.docx
+*.pptx
+*.pdf
+DhanVest_Execution_Plan-*.csv
+DhanVest_Q_A_and_Naming_ANSWERED-*.md
+DhanVestAI-Code-Readme.md
+dhanvest-mvp-*.html
+docs/source-review/
+docs/provider-research/
+supabase/.temp/
+real_dse_data.csv
