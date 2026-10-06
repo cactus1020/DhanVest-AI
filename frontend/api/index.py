@@ -67,6 +67,12 @@ def database_request(method, table, *, params=None, body=None, prefer=None):
             upstream_code = response.json().get('code')
         except (ValueError, AttributeError):
             upstream_code = None
+        if table == 'rpc/dhanvest_paper_order' and upstream_code == 'P0001':
+            message = response.json().get('message', '')
+            errors = {'insufficient_cash':'Not enough virtual cash, including the simulated fee.',
+                      'insufficient_shares':'You cannot sell more shares than you own.',
+                      'request_conflict':'Order reference was already used.', 'invalid_order':'Invalid virtual order.'}
+            raise HTTPException(409, errors.get(message, 'Virtual order could not be executed.'))
         if response.status_code in (401, 403):
             code = "database_credentials_invalid"
         elif upstream_code in ('42703', 'PGRST202', 'PGRST204', 'PGRST205'):
@@ -375,5 +381,15 @@ def research():
 def original_dashboard():
     return FileResponse(FRONTEND / 'dashboard.html')
 
+
+try:
+    from ..paper_trading import install as install_paper_trading
+except ImportError:
+    from paper_trading import install as install_paper_trading
+install_paper_trading(app, database_request, market_snapshot, FeedUnavailable)
+
+@app.get('/v2/practice', include_in_schema=False)
+def practice():
+    return FileResponse(FRONTEND / 'practice.html')
 
 app.mount("/assets", StaticFiles(directory=FRONTEND / "assets", check_dir=False), name="assets")
