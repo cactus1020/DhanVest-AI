@@ -30,8 +30,8 @@ def attach_news(frame,events,horizon):
         texts=[];counts=[];positive=[];negative=[]
         relevant=[(event,available) for event,available in prepared if symbol in event['symbols']]
         for day in group['date']:
-            # Decision cutoff is 14:30 Dhaka. Date-only archives become usable next day.
-            cutoff=pd.Timestamp(day).tz_localize('Asia/Dhaka')+pd.Timedelta(hours=14,minutes=30)
+            # Use an after-close cutoff. Date-only archives remain usable next day.
+            cutoff=pd.Timestamp(day).tz_localize('Asia/Dhaka')+pd.Timedelta(hours=16,minutes=30)
             cutoff=cutoff.tz_convert('UTC');start=cutoff-pd.Timedelta(days=7)
             eligible={event['event_id']:event for event,available in relevant if start<available<=cutoff}
             texts.append(' '.join(event['title'] for event in eligible.values()) or '__no_news__')
@@ -47,20 +47,25 @@ def classifier(with_news):
 
 def evaluate(price_csv,news_jsonl,source_url,horizons=(2,40),output='data/news-model-evaluation.json',allow_archive_reconstruction=False, special_sessions=()):
     validate_source(source_url)
-    prices=features(load_market_data(price_csv,special_sessions=special_sessions))
+    prices=features(load_market_data(price_csv,special_sessions=special_sessions),include_labels=False)
     events=[json.loads(line) for line in Path(news_jsonl).read_text(encoding='utf-8').splitlines() if line.strip()]
     if not events:raise ValueError('News dataset is empty.')
     if not allow_archive_reconstruction and any(event.get('availability_basis')=='archive_reconstruction' for event in events):
         raise ValueError('Archive timestamps require explicit research-only acknowledgement; they do not establish live point-in-time availability.')
-    report={'status':'research_only','source_url':source_url,'news_events':len(events),'horizons':{},'limitations':['Current-universe selection/survivorship bias.','Unadjusted source prices may contain corporate-action effects.','Publication/archive revision metadata is incomplete.','These are exploratory folds, not a final untouched holdout or calibrated production probabilities.']}
+    report={'status':'research_only','source_url':source_url,'news_events':len(events),'target_definition':'up if future close exceeds current close; not_up includes down and flat','horizons':{},'limitations':['Current-universe selection/survivorship bias.','Unadjusted source prices may contain corporate-action effects.','Publication/archive revision metadata is incomplete.','Newspaper features use headlines, not licensed full article content.','These are exploratory folds, not a final untouched holdout or calibrated production probabilities.']}
     for horizon in horizons:
         frame=attach_news(prices,events,horizon)
+        official=[event for event in events if event.get('kind')=='official']
+        disclosure_frame=attach_news(prices,official,horizon) if official else None
         folds=[]
         for train,test in chronological_folds(frame):
             if train['target'].nunique()<2:continue
             row={'test_start':test['date'].min().date().isoformat(),'test_end':test['date'].max().date().isoformat(),'train_rows':len(train),'test_rows':len(test),'latest_training_label':train['label_date'].max().date().isoformat(),'test_rows_with_news':int((test['news_count']>0).sum())}
-            for label,include in [('price_only',False),('price_plus_news',True)]:
-                model=classifier(include);model.fit(train,train['target']);prediction=model.predict(test);prob=model.predict_proba(test)[:,1]
+            comparisons=[('price_only',False,frame),('price_plus_news',True,frame)]
+            if disclosure_frame is not None:comparisons.insert(1,('price_plus_disclosures',True,disclosure_frame))
+            for label,include,source in comparisons:
+                training=source.loc[train.index];testing=source.loc[test.index]
+                model=classifier(include);model.fit(training,training['target']);prediction=model.predict(testing);prob=model.predict_proba(testing)[:,1]
                 row[label]={'accuracy':float(accuracy_score(test['target'],prediction)),'balanced_accuracy':float(balanced_accuracy_score(test['target'],prediction)),'brier_score':float(brier_score_loss(test['target'],prob))}
             majority=int(train['target'].mode().iloc[0]);row['majority_baseline_accuracy']=float(accuracy_score(test['target'],np.full(len(test),majority)));folds.append(row)
         report['horizons'][str(horizon)+'_trading_sessions']=folds

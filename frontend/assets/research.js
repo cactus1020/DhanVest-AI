@@ -127,6 +127,7 @@ function renderStock(stock, button) {
   }
   explanation.style.display = 'none';
   explanation.textContent = '';
+  renderFundamentals(stock);
   if (stock.coverage === 0 && stock.stored_data) {
     explanation.style.display = 'block';
     explanation.textContent = stock.stored_summary_bn || 'Your stored data is available. Use Explain in Bangla for price movement and data limitations.';
@@ -140,6 +141,27 @@ function renderStock(stock, button) {
   explainButton.textContent = 'Explain in Bangla';
   explainButton.disabled = !canExplain(stock);
   document.dispatchEvent(new CustomEvent("stock-selected", {detail:stock}));
+}
+
+function renderFundamentals(stock) {
+  let panel = document.getElementById('fundamentalsPanel');
+  if (!panel) {
+    panel = document.createElement('section'); panel.id = 'fundamentalsPanel';
+    document.getElementById('savedResearch').before(panel);
+  }
+  panel.replaceChildren();
+  const heading = document.createElement('h3'); heading.textContent = 'Dated company fundamentals'; panel.append(heading);
+  const info = stock.fundamentals;
+  if (!info) { const p=document.createElement('p');p.textContent='No dated financial report has been supplied for this company yet.';panel.append(p);return; }
+  const period=document.createElement('p'); period.textContent=info.period_kind+' reporting period ended '+info.period_end+(info.fresh?'':' · Too old for scoring'); panel.append(period);
+  const table=document.createElement('table');
+  const values=[['Annual EPS (BDT)',info.eps],['NAV per share (BDT)',info.nav_per_share],['Annual net profit (BDT mn)',info.net_profit_mn],['ROE (%)',info.roe],['Debt / equity (times)',info.debt_to_equity],['P/E (times)',info.pe_ratio]];
+  values.forEach(([label,value])=>{const row=document.createElement('tr');const name=document.createElement('th');name.scope='row';name.textContent=label;const cell=document.createElement('td');cell.textContent=value==null?'Not verified':Number(value).toLocaleString('en-BD',{maximumFractionDigits:2});row.append(name,cell);table.append(row);});panel.append(table);
+  const note=document.createElement('p');note.textContent='P/E uses the '+info.price_date+' closing price and reported annual EPS. Annual reports remain eligible for up to 18 months; missing debt or ROE is not estimated. Annual figures do not describe current-quarter results.';panel.append(note);
+  const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Definitions and source';details.append(summary);
+  for(const text of [...(info.notes||[]),info.roe_method,info.debt_method].filter(Boolean)){const p=document.createElement('p');p.textContent=text;details.append(p);}
+  try { const url=new URL(info.source_url);if(url.protocol==='https:'&&!url.username&&!url.password){const link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open financial source ↗';details.append(link);} } catch (_) {}
+  panel.append(details);
 }
 
 async function generateExplanation() {

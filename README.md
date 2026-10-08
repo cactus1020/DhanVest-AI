@@ -161,3 +161,11 @@ Migrations 004–007 add virtual portfolios, prospective-news records, private r
 ### Confirmation redirect repaired — 8 October 2026
 
 Supabase's production Site URL and allowlist now point to `/v2/practice`. Signup and resend requests specify that exact URL. Confirmation callbacks open the saved portfolio and remove tokens from the address bar; expired links have recovery guidance. Users whose old email opens localhost should sign in directly or use **Resend confirmation email** with the same address. No new account is necessary. The updated suite passes 69 Python tests and three callback tests. See [confirmation troubleshooting and verification scope](docs/auth-confirmation.md).
+
+### Dated fundamentals and newspaper training — 8 October 2026
+
+Both research pages now show sourced annual EPS, NAV/share, profit, reviewed ROE/debt, reporting period and P/E using the displayed closing session. Separate financial versions preserve old market rows and saved scores. Value is available for 32 stocks; Quality for two with individually reviewed reports. GP has 100% factor-input coverage. Annual statements have a disclosed 548-day eligibility limit; missing ratios stay unavailable. The protected financial collector runs weekly on Sunday around 18:00 Dhaka, with timing subject to the hosting plan.
+
+731 Financial Express archive dates yielded 2,798 initial company/sector headline matches. Entity review against the official catalogue removed 1,207 outside-universe company stories and corrected 54 mappings. Two research candidates were trained on 1,591 reviewed newspaper headlines, 2,467 disclosures and the existing 23,961 price observations. Same-window mean balanced accuracy for price/disclosures/combined is 50.83% / 49.65% / 51.39% at two sessions and 52.99% / 54.77% / 54.32% at forty sessions. This does not establish consistent news benefit or production prediction accuracy. Full-text licensing, broader publishers, adjusted prices, holdout/calibration and prospective validation remain pending.
+
+76 Python tests and three callback tests pass. Live price and financial refresh jobs have been verified once. Data, report PDFs and model binaries stay under ignored `data/`; public source includes only implementation and a small result summary. See [the dated source/experiment report](docs/fundamentals-and-newspaper-experiment-20261008.md).

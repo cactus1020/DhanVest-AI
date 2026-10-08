@@ -102,7 +102,7 @@ class ApiTests(unittest.TestCase):
 
     def test_legacy_schema_keeps_stock_names_but_does_not_trust_old_scores(self):
         row = {'stock_id': 1, 'date': '2026-10-06', 'close_price': 100, 'volume': 1000}
-        with patch.object(api, 'read_all', side_effect=[[STOCK], [row], [], []]):
+        with patch.object(api, 'read_all', side_effect=[[STOCK], [row], [], [], []]):
             response = self.client.get('/api/stocks')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()[0]['symbol'], STOCK['symbol'])

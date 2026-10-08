@@ -5,6 +5,15 @@ from statistics import mean, median
 
 WEIGHTS = {"quality": 0.32, "value": 0.28, "momentum": 0.25, "liquidity": 0.15}
 
+def fundamentals_fresh(row,today):
+    try:
+        age=(today-date.fromisoformat(str(row.get('fundamentals_date')))).days
+        # Audited annual statements arrive after year-end. Allow 18 months,
+        # while retaining the displayed period rather than relabelling it today.
+        limit=548 if row.get('fundamentals_period_kind')=='annual' else 180
+        return 0<=age<=limit
+    except (ValueError,TypeError):return False
+
 
 def number(value, minimum=None):
     try:
@@ -60,14 +69,13 @@ def score_stock(stock, rows, sector_pe=None, today=None):
     result["stale"] = (today - date.fromisoformat(latest["date"])).days > 7
     if result["stale"]:
         result["warnings"].append("Historical snapshot: market data is more than 7 days old.")
-    try:
-        age = (today - date.fromisoformat(str(latest.get("fundamentals_date")))).days
-        fresh_fundamentals = 0 <= age <= 180
-    except (ValueError, TypeError):
-        fresh_fundamentals = False
+    fresh_fundamentals = fundamentals_fresh(latest,today)
     roe = number(latest.get("roe")) if fresh_fundamentals else None
     debt = number(latest.get("debt_to_equity"), 0) if fresh_fundamentals else None
     pe = number(latest.get("pe_ratio"), 0) if fresh_fundamentals else None
+    if latest.get('fundamentals'):
+        result['fundamentals']=dict(latest['fundamentals'],pe_ratio=pe,price_date=latest['date'],fresh=fresh_fundamentals)
+        if not fresh_fundamentals:result['warnings'].append('Financial reporting period is too old for scoring.')
     if roe is not None and debt is not None:
         result["quality"] = clamp(0.6 * clamp(roe / 30 * 100) + 0.4 * clamp((1 - debt / 2) * 100))
     if pe and sector_pe and stock.get("sector") not in (None, "", "General", "Unknown"):
@@ -89,7 +97,7 @@ def score_stock(stock, rows, sector_pe=None, today=None):
     return result
 
 
-def score_universe(stocks, rows, today=None):
+def score_universe(stocks, rows, today=None, sector_pe_extra=()):
     today = today or date.today()
     grouped = {}
     for row in rows:
@@ -103,12 +111,19 @@ def score_universe(stocks, rows, today=None):
         latest = history[-1]
         try:
             market_age = (today - date.fromisoformat(latest["date"])).days
-            age = (today - date.fromisoformat(str(latest.get("fundamentals_date")))).days
         except (ValueError, TypeError):
             continue
         pe = number(latest.get("pe_ratio"), 0)
-        if pe and 0 <= age <= 180 and market_age <= 7:
+        if pe and fundamentals_fresh(latest,today) and market_age <= 7:
             sectors.setdefault(stock["sector"], []).append(pe)
+    for peer in sector_pe_extra:
+        if peer.get('source_verified') is not True or not peer.get('source_url'):continue
+        try: market_age=(today-date.fromisoformat(peer['price_date'])).days
+        except (KeyError,TypeError,ValueError):continue
+        if not 0<=market_age<=7 or not fundamentals_fresh({'fundamentals_date':peer['period_end'],'fundamentals_period_kind':peer['period_kind']},today):continue
+        eps=number(peer.get('eps'));price=number(peer.get('benchmark_price'),0)
+        if eps and eps>0 and price and peer['sector'] not in ('General','Unknown',''):
+            sectors.setdefault(peer['sector'],[]).append(price/eps)
     result = []
     for stock in stocks:
         peers = sectors.get(stock.get("sector"), [])

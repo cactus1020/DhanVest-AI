@@ -189,6 +189,7 @@
   @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
 <link rel="stylesheet" href="/assets/v2.css">
+<link rel="stylesheet" href="/assets/fundamentals.css">
 </head>
 <body data-version="v2">
 
@@ -204,7 +205,7 @@
 </nav>
 
 <!-- HERO: LIVE APP -->
-<section class="v2-status wrap"><p id="connectionStatus" role="status">Checking database connection…</p><p id="ingestionStatus" role="status">Checking daily collector…</p><p id="newsCaptureStatus" role="status">Checking announcement collection…</p><p id="marketFeedStatus" role="status">Connecting to DSE market data…</p><p>Price + news model: research comparison completed · Production validation and company fundamentals pending</p></section>
+<section class="v2-status wrap"><p id="connectionStatus" role="status">Checking database connection…</p><p id="ingestionStatus" role="status">Checking daily collector…</p><p id="newsCaptureStatus" role="status">Checking announcement collection…</p><p id="marketFeedStatus" role="status">Connecting to DSE market data…</p><p>Dated fundamentals added · Company coverage varies · Price + newspaper research trained; production validation pending</p></section>
 <header class="hero">
   <div class="wrap hero-grid">
     <div>
@@ -291,11 +292,11 @@
   </div>
 </header>
 <section class="wrap v2-sources"><h2>Practice with ৳১০ লাখ virtual funds</h2><p>Build a portfolio using DSE quotes and track your decisions, fees and profit / loss.</p><a class="btn btn-primary" href="/v2/practice">Start virtual investing →</a></section>
-<section class="wrap v2-sources"><h2>Price + news model research</h2><p>Actual price and announcement features are trained together. These results are exploratory validation, not a live forecast or calibrated confidence level.</p><div id="modelResearchResults" role="status"></div><p>Newspaper archives, broad market features, corporate-action adjustments and a live shadow record remain required.</p></section>
-<section class="wrap v2-sources"><h2>News &amp; disclosure sources</h2><p>DSE company announcements are fetched when you select a stock. Newspaper and broader news ingestion are being prepared.</p><div class="source-grid"><a href="https://www.dsebd.org/" target="_blank" rel="noopener noreferrer">DSE company disclosures ↗</a><a href="https://www.cse.com.bd/" target="_blank" rel="noopener noreferrer">CSE company announcements ↗</a><a href="https://thefinancialexpress.com.bd/category/stock" target="_blank" rel="noopener noreferrer">Financial Express stock news ↗</a><a href="https://www.tbsnews.net/economy/stocks" target="_blank" rel="noopener noreferrer">The Business Standard stock news ↗</a></div></section>
+<section class="wrap v2-sources"><h2>Price + newspaper model research</h2><p>Actual prices, DSE disclosures and historical newspaper headlines are trained together. Compare all three models on identical chronological windows. Results are exploratory, not live forecasts or calibrated confidence.</p><div id="modelResearchResults" role="status"></div><p>Licensed full-text news, broader publisher coverage, corporate-action adjustments and prospective shadow validation remain required.</p></section>
+<section class="wrap v2-sources"><h2>News &amp; disclosure sources</h2><p>DSE announcements support the live research workspace. Financial Express historical headlines support the offline model experiment; TBS, CSE and full-text feeds are future sources, not active model inputs.</p><div class="source-grid"><a href="https://www.dsebd.org/" target="_blank" rel="noopener noreferrer">DSE company disclosures ↗</a><a href="https://www.cse.com.bd/" target="_blank" rel="noopener noreferrer">CSE company announcements ↗</a><a href="https://today.thefinancialexpress.com.bd/stock-corporate" target="_blank" rel="noopener noreferrer">Financial Express archive ↗</a><a href="https://www.tbsnews.net/economy/stocks" target="_blank" rel="noopener noreferrer">The Business Standard stock news ↗</a></div></section>
 <section id="methodology" class="wrap" style="padding:32px 24px;max-width:900px">
   <h2 style="font-size:26px">How the scores work</h2>
-  <p>Quality uses reported ROE and debt-to-equity. Value compares positive P/E ratios with the median of at least three companies in the same sector. Fundamentals require a reporting date within the last 180 days. Momentum describes the return over 60 trading sessions; liquidity uses average volume over 20 sessions.</p>
+  <p>Quality uses reported ROE and debt-to-equity with issuer definitions disclosed. Value compares positive P/E ratios with at least three companies in the same sector; P/E uses dated prices and annual earnings. Annual reports remain eligible for 18 months from period end, while quarterly and legacy inputs require a date within 180 days. Reporting periods and missing fields are shown below each stock. Momentum uses 60 trading sessions; liquidity uses average volume over 20 sessions.</p>
   <p>Base weights: quality 32%, value 28%, momentum 25%, liquidity 15%. Missing factors remain unavailable; available weights are renormalized and shown on the card. Coverage measures available factor weight, not prediction accuracy. Scores are heuristic research measures and have no proven investment performance.</p>
   <p>Bangla explanations describe the displayed scores. When configured, a server-side AI service explains the data; otherwise fixed factor rules provide the explanation. The method is disclosed with each result. No price forecasts or buy/sell recommendations are requested.</p>
 </section>

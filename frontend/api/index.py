@@ -27,6 +27,11 @@ try:
 except ImportError:
     from market_data import market_snapshot, company_history, company_news, FeedUnavailable
 
+try:
+    from ..fundamentals import attach_fundamentals
+except ImportError:
+    from fundamentals import attach_fundamentals
+
 FRONTEND = Path(__file__).resolve().parents[1]
 ROOT = FRONTEND.parent
 load_dotenv(ROOT / ".env")
@@ -117,7 +122,16 @@ def current_stocks():
             if error.code != 'database_schema_missing':
                 raise
             verified_rows = []
-        results = score_universe(stocks, rows + verified_rows)
+        try:
+            fundamentals = read_all('dhanvest_fundamentals',order='record_id.asc')
+        except DatabaseUnavailable as error:
+            if error.code != 'database_schema_missing':raise
+            fundamentals = []
+        companies,current_rows,_ = attach_fundamentals(stocks,rows+verified_rows,fundamentals)
+        extra={}
+        for item in fundamentals:
+            if item['stock_id'] is None and (item['symbol'] not in extra or (item['period_end'],item.get('price_date') or '')>(extra[item['symbol']]['period_end'],extra[item['symbol']].get('price_date') or '')):extra[item['symbol']]=item
+        results = score_universe(companies,current_rows,sector_pe_extra=extra.values())
         try:
             saved_scores = read_all("factor_scores")
         except DatabaseUnavailable as error:
@@ -396,6 +410,11 @@ try:
 except ImportError:
     from news_pipeline import install as install_news_pipeline
 install_news_pipeline(app, database_request, read_all, authorize_job)
+try:
+    from ..fundamental_jobs import install as install_fundamental_jobs
+except ImportError:
+    from fundamental_jobs import install as install_fundamental_jobs
+install_fundamental_jobs(app,database_request,read_all,authorize_job)
 
 @app.get('/v2/practice', include_in_schema=False)
 def practice():

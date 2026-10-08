@@ -1,1 +1,19 @@
-{"status": "research_only", "companies": 50, "price_records": 23961, "announcement_events": 2467, "coverage_start": "2024-10-06", "coverage_end": "2026-10-06", "results": [{"horizon": "2_trading_sessions", "price_only_balanced_accuracy": 50.5, "news_balanced_accuracy": 49.9}, {"horizon": "40_trading_sessions", "price_only_balanced_accuracy": 53.2, "news_balanced_accuracy": 54.7}]}
+{
+  "status": "research_only",
+  "experiment_date": "2026-10-08",
+  "companies": 50,
+  "price_records": 23961,
+  "announcement_events": 2467,
+  "newspaper_headlines": 1591,
+  "initial_headlines_collected": 2798,
+  "entity_review_excluded": 1207,
+  "newspaper_source": "The Financial Express stock/corporate archive",
+  "coverage_start": "2024-10-06",
+  "coverage_end": "2026-10-06",
+  "results": [
+    {"horizon":"2_trading_sessions","price_only_balanced_accuracy":50.83,"disclosures_balanced_accuracy":49.65,"news_balanced_accuracy":51.39},
+    {"horizon":"40_trading_sessions","price_only_balanced_accuracy":52.99,"disclosures_balanced_accuracy":54.77,"news_balanced_accuracy":54.32}
+  ],
+  "interpretation": "Three identical chronological test windows. Headlines improve the two-session mean; the forty-session combined model underperforms disclosure-only. These are exploratory comparisons, not calibrated live predictions.",
+  "content_scope": "Headline features, not full newspaper articles. Historical availability is conservatively reconstructed; archive revisions are not verified."
+}

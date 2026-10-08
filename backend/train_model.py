@@ -14,7 +14,7 @@ from backend.data_validation import load_market_data, validate_source
 FEATURES = ["close", "volume", "return_daily", "momentum_ratio", "vol_ma5"]
 
 
-def features(frame):
+def features(frame, include_labels=True):
     groups = []
     for _, stock in frame.groupby("symbol"):
         stock = stock.sort_values("date").copy()
@@ -25,7 +25,7 @@ def features(frame):
         stock["label_date"] = stock["date"].shift(-5)
         stock["target"] = (future > stock["close"]).astype(int)
         groups.append(stock)
-    return pd.concat(groups).replace([np.inf, -np.inf], np.nan).dropna(subset=FEATURES + ["label_date"])
+    return pd.concat(groups).replace([np.inf, -np.inf], np.nan).dropna(subset=FEATURES + (["label_date"] if include_labels else []))
 
 
 def chronological_folds(frame):

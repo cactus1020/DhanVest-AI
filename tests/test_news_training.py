@@ -7,7 +7,7 @@ from unittest.mock import patch
 class NewsTrainingTests(unittest.TestCase):
     def test_news_join_uses_prediction_cutoff_and_company(self):
         frame=pd.DataFrame({'symbol':['GP']*5,'date':pd.to_datetime(['2026-01-04','2026-01-05','2026-01-06','2026-01-07','2026-01-08']),'close':[100,102,101,103,104]})
-        events=[{'event_id':'1','symbols':['GP'],'title':'Dividend announcement','available_at':'2026-01-05T15:00:00+06:00'}, {'event_id':'2','symbols':['OTHER'],'title':'Other company','available_at':'2026-01-04T10:00:00+06:00'}]
+        events=[{'event_id':'1','symbols':['GP'],'title':'Dividend announcement','available_at':'2026-01-05T17:00:00+06:00'}, {'event_id':'2','symbols':['OTHER'],'title':'Other company','available_at':'2026-01-04T10:00:00+06:00'}]
         result=attach_news(frame,events,2)
         self.assertEqual(result['news_count'].tolist(),[0,0,1])
         self.assertEqual(result['target'].tolist(),[1,1,1])

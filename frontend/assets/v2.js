@@ -16,7 +16,7 @@ function renderCurrentMetrics() {
     document.getElementById('dataDate').textContent = 'DSE session: ' + quote.session_date + ' · Sector: ' + quote.sector;
     const link = document.getElementById('dataSource'); link.href = 'https://www.dsebd.org/api/live/prices'; link.hidden = false; link.textContent = 'DSE source data ↗';
   }
-  document.getElementById('companyHealth').textContent = data ? 'Business health inputs: P/E ' + (data.pe_ratio ?? 'not supplied') + ', ROE ' + (data.roe ?? 'not supplied') + ', debt/equity ' + (data.debt_to_equity ?? 'not supplied') + '. Saved scores remain separate from DSE quotes; current financial health requires dated company reports.' : 'Company fundamentals have not been supplied yet.';
+  document.getElementById('companyHealth').textContent = stock.fundamentals ? 'Financial inputs come from the dated report below. Missing fields remain unavailable; report figures and live market quotes may refer to different dates.' : 'Company fundamentals have not been supplied yet.';
 }
 document.addEventListener('stock-selected', event => {
   v2Selection = event.detail;
@@ -67,14 +67,14 @@ async function showModelResearch() {
     const response = await fetch('/assets/news-model-research.json');
     if (!response.ok) throw new Error('Research report unavailable.');
     const report = await response.json();
-    const data = document.createElement('p'); data.textContent = report.companies + ' companies · ' + report.price_records.toLocaleString() + ' price observations · ' + report.announcement_events.toLocaleString() + ' official events · ' + report.coverage_start + ' to ' + report.coverage_end;
+    const data = document.createElement('p'); data.textContent = report.companies + ' companies · ' + report.price_records.toLocaleString() + ' price observations · ' + report.announcement_events.toLocaleString() + ' official events · ' + (report.newspaper_headlines || 0).toLocaleString() + ' newspaper headlines · ' + report.coverage_start + ' to ' + report.coverage_end;
     container.replaceChildren(data);
     const table = document.createElement('table');
     const header = document.createElement('tr');
-    ['Horizon','Price-only','Price + news'].forEach(label => { const cell=document.createElement('th');cell.textContent=label;header.append(cell); });table.append(header);
-    report.results.forEach(row => {const line=document.createElement('tr'); [row.horizon.replaceAll('_',' '),row.price_only_balanced_accuracy + '%',row.news_balanced_accuracy + '%'].forEach(value => {const cell=document.createElement('td');cell.textContent=value;line.append(cell);});table.append(line);});
-    container.append(table);
-    const note = document.createElement('p'); note.textContent = 'Mean balanced accuracy across three chronological tests. News did not consistently improve the two-session model; longer-horizon improvement is modest. Candidate models are saved for research and are not enabled as production predictions.';container.append(note);
+    ['Horizon','Price-only','Price + DSE disclosures','Price + disclosures + newspaper headlines'].forEach(label => { const cell=document.createElement('th');cell.textContent=label;header.append(cell); });table.append(header);
+    report.results.forEach(row => {const line=document.createElement('tr'); [row.horizon.replaceAll('_',' '),row.price_only_balanced_accuracy + '%',row.disclosures_balanced_accuracy + '%',row.news_balanced_accuracy + '%'].forEach(value => {const cell=document.createElement('td');cell.textContent=value;line.append(cell);});table.append(line);});
+    const wrap=document.createElement('div');wrap.className='research-table-wrap';wrap.tabIndex=0;wrap.setAttribute('aria-label','Research model comparison table');wrap.append(table);container.append(wrap);
+    const note = document.createElement('p'); note.textContent = report.interpretation+' '+report.content_scope+' Target: up versus not-up (down or flat). Public forecasts remain disabled.';container.append(note);
   } catch (error) { container.textContent = error.message; }
 }
 showModelResearch();

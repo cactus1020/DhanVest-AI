@@ -8,6 +8,10 @@
   },
   "crons": [
     {
+      "path": "/api/jobs/fundamentals-sync",
+      "schedule": "0 12 * * 0"
+    },
+    {
       "path": "/api/jobs/news-sync",
       "schedule": "0 11 * * *"
     }
