@@ -2,10 +2,23 @@
 (() => {
   const el = id => document.getElementById(id);
   const money = value => value == null ? 'Unavailable' : '৳' + Number(value).toLocaleString('en-BD', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  let token = sessionStorage.getItem('dhanvest-paper-session');
+  const callback = new URLSearchParams(location.hash.slice(1));
+  const callbackError = callback.has('error') || callback.has('error_code');
+  let token = callbackError ? null : callback.get('access_token') || sessionStorage.getItem('dhanvest-paper-session');
   let quotes = [], positions = [], trades = [], cash = 0, marketOpen = false;
   let pending = null, busy = false, refreshing = false, mode = 'login', generation = 0;
   let retry = null;
+  if (callback.get('access_token')) {
+    if (!callbackError) sessionStorage.setItem('dhanvest-paper-session', token);
+    sessionStorage.removeItem('dhanvest-paper-retry');
+  }
+  if (callbackError) {
+    sessionStorage.removeItem('dhanvest-paper-session');
+    sessionStorage.removeItem('dhanvest-paper-retry');
+  }
+  if (callback.get('access_token') || callbackError) {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
   try { retry = JSON.parse(sessionStorage.getItem('dhanvest-paper-retry') || 'null'); } catch (_) { sessionStorage.removeItem('dhanvest-paper-retry'); }
 
   function status(text, error = false) {
@@ -114,6 +127,19 @@
     const show = el('password').type === 'password'; el('password').type = show ? 'text' : 'password';
     el('togglePassword').textContent = show ? 'Hide password' : 'Show password'; el('togglePassword').setAttribute('aria-pressed', String(show));
   };
+  el('resendConfirmation').onclick = async () => {
+    if (busy || !el('email').reportValidity()) return;
+    busy = true; el('resendConfirmation').disabled = true;
+    try {
+      status('Requesting a new confirmation email…');
+      const data = await api('/api/account/resend', {email: el('email').value.trim()});
+      status(data.message); authMode('login');
+    } catch (error) { status(error.message, true); }
+    finally {
+      busy = false;
+      setTimeout(() => { el('resendConfirmation').disabled = false; }, 60000);
+    }
+  };
   el('authForm').addEventListener('submit', async event => {
     event.preventDefault(); if (busy) return; busy = true; el('authSubmit').disabled = true;
     try {
@@ -164,5 +190,8 @@
   el('side').addEventListener('change', stockOptions);
   for (const id of ['symbol', 'quantity']) el(id).addEventListener('input', estimate);
   setInterval(() => { if (token && !document.hidden && !busy && !pending && !retry) load().catch(error => status(error.message, true)); }, 60000);
-  if (token) load().catch(error => status(error.message, true));
+  if (callbackError) status('Confirmation link expired or already used. Try signing in; if your email is still unconfirmed, request a new confirmation email below.', true);
+  if (token) load().then(() => {
+    if (token && callback.get('access_token')) status(callback.get('type') === 'signup' ? 'Email confirmed. Your virtual portfolio is ready.' : 'Signed in. Your virtual portfolio is ready.');
+  }).catch(error => status(error.message, true));
 })();

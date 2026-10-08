@@ -157,3 +157,7 @@ The private daily announcement collector records actual first-seen timestamps an
 Migrations 004–007 add virtual portfolios, prospective-news records, private research prediction/outcome ledgers and restricted receipt permissions. `python -m scripts.resolve_shadow_predictions` resolves eligible private outcomes using future verified trading sessions. It does not create forecasts, promote models or submit trades.
 
 66 software tests, rollback-only PostgreSQL checks, a dedicated live QA account login/funding smoke test, and isolated browser buy/sell/isolation checks passed. This supports a supervised prototype pitch; it does not certify public production readiness. Email delivery/recovery, key revocation, durable abuse protection, sustained operation and live model validation are still required. See the [readiness assessment](docs/production-readiness-20261007.md).
+
+### Confirmation redirect repaired — 8 October 2026
+
+Supabase's production Site URL and allowlist now point to `/v2/practice`. Signup and resend requests specify that exact URL. Confirmation callbacks open the saved portfolio and remove tokens from the address bar; expired links have recovery guidance. Users whose old email opens localhost should sign in directly or use **Resend confirmation email** with the same address. No new account is necessary. The updated suite passes 69 Python tests and three callback tests. See [confirmation troubleshooting and verification scope](docs/auth-confirmation.md).

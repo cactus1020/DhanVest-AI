@@ -37,6 +37,28 @@ class PaperTradingTests(unittest.TestCase):
             response=self.client.post('/api/account/login',json={'email':'test@example.com','password':'secure-password'},headers={'Origin':'https://untrusted.example'})
         self.assertEqual(response.status_code,403);auth.assert_not_called()
 
+    def test_signup_uses_production_confirmation_redirect(self):
+        with patch.object(paper,'auth_request',return_value={'access_token':None}) as auth:
+            response=self.client.post('/api/account/signup',json={'email':'test@example.com','password':'secure-password'})
+        self.assertEqual(response.status_code,200)
+        path=auth.call_args.args[0]
+        self.assertIn('redirect_to=https%3A%2F%2Fdhanvest.covers.bd%2Fv2%2Fpractice',path)
+        self.assertNotIn('localhost',path)
+
+    def test_resend_needs_only_email_and_uses_fixed_production_url(self):
+        with patch.object(paper,'auth_request',return_value={}) as auth:
+            response=self.client.post('/api/account/resend',json={'email':'TEST@example.com','redirect_to':'https://untrusted.example'})
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(auth.call_args.args[1],{'type':'signup','email':'test@example.com'})
+        self.assertIn('https%3A%2F%2Fdhanvest.covers.bd%2Fv2%2Fpractice',auth.call_args.args[0])
+        self.assertNotIn('untrusted',auth.call_args.args[0])
+
+    def test_resend_rejects_bad_email_and_cross_origin_without_sending(self):
+        with patch.object(paper,'auth_request') as auth:
+            self.assertEqual(self.client.post('/api/account/resend',json={'email':'bad'}).status_code,422)
+            self.assertEqual(self.client.post('/api/account/resend',json={'email':'test@example.com'},headers={'Origin':'https://untrusted.example'}).status_code,403)
+        auth.assert_not_called()
+
     def test_invalid_quote_timestamp_never_writes(self):
         from fastapi import FastAPI
         for stamp in ['invalid', '2026-10-07T10:00:00']:

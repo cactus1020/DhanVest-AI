@@ -6,12 +6,15 @@ from decimal import Decimal
 from uuid import UUID
 from zoneinfo import ZoneInfo
 from urllib.parse import urlparse
+from urllib.parse import quote
 
 import httpx
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
+
+PAPER_AUTH_REDIRECT = 'https://dhanvest.covers.bd/v2/practice'
 
 
 def auth_request(path, body=None, token=None):
@@ -43,9 +46,8 @@ def user_id(request):
         raise HTTPException(401, 'Please sign in again.') from None
 
 
-class Credentials(BaseModel):
+class EmailRequest(BaseModel):
     email: str = Field(min_length=5, max_length=254)
-    password: str = Field(min_length=8, max_length=128)
 
     @field_validator('email')
     @classmethod
@@ -54,6 +56,10 @@ class Credentials(BaseModel):
         if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', value):
             raise ValueError('Enter a valid email address.')
         return value
+
+
+class Credentials(EmailRequest):
+    password: str = Field(min_length=8, max_length=128)
 
 
 class Order(BaseModel):
@@ -86,11 +92,19 @@ def install(app, database_request, market_snapshot, feed_error):
             response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
         return response
 
+    @app.post('/api/account/resend')
+    def resend(payload: EmailRequest):
+        auth_request('resend?redirect_to='+quote(PAPER_AUTH_REDIRECT, safe=''),
+                     {'type':'signup', 'email':payload.email})
+        return {'message':'If your account needs confirmation, check your inbox and spam folder. Already confirmed? Sign in.'}
+
     @app.post('/api/account/{action}')
     def account(action: str, payload: Credentials):
         if action not in ('signup','login'):
             raise HTTPException(404)
-        data = auth_request('signup' if action=='signup' else 'token?grant_type=password', payload.model_dump())
+        path = ('signup?redirect_to='+quote(PAPER_AUTH_REDIRECT, safe='')
+                if action == 'signup' else 'token?grant_type=password')
+        data = auth_request(path, payload.model_dump())
         # No refresh token persisted in the browser; users sign in again on expiry.
         return {'access_token':data.get('access_token'), 'expires_in':data.get('expires_in'),
                 'confirmation_required':not bool(data.get('access_token'))}
