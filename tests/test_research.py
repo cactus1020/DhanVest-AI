@@ -225,11 +225,14 @@ class ApiTests(unittest.TestCase):
 
 
 class DataAndModelTests(unittest.TestCase):
-    def test_bundled_undated_csv_is_rejected_before_any_write(self):
-        path = Path(__file__).resolve().parents[1] / 'real_dse_data.csv'
-        with patch('backend.seed_supabase.database_request') as write, self.assertRaisesRegex(ValueError, 'date'):
-            seed_database(path, 'https://example.org/archive', True)
-        write.assert_not_called()
+    def test_undated_csv_is_rejected_before_any_write(self):
+        # Keep the rejection proof portable: the legacy local CSV is not public.
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'undated.csv'
+            path.write_text('symbol,close,volume\nTEST,100,10\n', encoding='utf-8')
+            with patch('backend.seed_supabase.database_request') as write, self.assertRaisesRegex(ValueError, 'date'):
+                seed_database(path, 'https://example.org/archive', True)
+            write.assert_not_called()
 
     def test_bad_dates_and_duplicate_rows_are_rejected(self):
         for data in [
